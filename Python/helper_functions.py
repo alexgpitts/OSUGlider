@@ -32,8 +32,10 @@
 # In collaboration with Pat Welch
 
 # import argparse
+from asyncio.windows_events import NULL
 import numpy as np
 import xarray as xr
+import matplotlib.pyplot as plt
 
 
 FREQ = True
@@ -41,6 +43,24 @@ TXYZ = True
 WAVE = True
 META = True
 filename = "./067.20201225_1200.20201225_1600.nc"
+
+
+def Plotter(fig, axs, xy) -> NULL:
+    """Takes a Figure from matplotlib, the array for the figure, and a list of data to plot,
+    data in xy stored as a list of lists where xy = [["title", "namex", "namey", [x], [y]], [...]]
+    """
+    index = 0
+    for i in axs.reshape(-1):
+        i.set_title(xy[index][0])
+        i.set_xlabel(xy[index][1])
+        i.set_ylabel(xy[index][2])
+        if isinstance(xy[index][4], list):
+            for j in xy[index][4]:
+                i.plot(xy[index][3], j)
+        else:
+            i.plot(xy[index][3], xy[index][4])
+        index += 1
+    plt.tight_layout()
 
 
 def Rolling_mean(x:np.array, w:np.array) -> np.array:

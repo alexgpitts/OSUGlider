@@ -1,11 +1,11 @@
 # import Data from CDIP
-from helper_functions import (Data, calcPSD, wcalcPSD, wfft)
+from helper_functions import (Data, calcPSD, wcalcPSD, wfft, Plotter)
 import numpy as np
 import matplotlib.pyplot as plt
 
 
 # plotting perameters. Change for what you want displayed in graphs
-displayPSD = True
+displayPSD = False
 displayDS = True
 
 # fft perameters
@@ -201,71 +201,44 @@ for i in range(len(time_bounds["lower"])):
     ##########################################
     # fig1 = Plotter(freq_space, PSD["xx"], freq_midpoints, Band["xx"], wPSD["freq_space"], wPSD["xx"], "X")
     if(displayPSD):
+
         # X
-        fig1, [plt_psd_xx, plt_psd_banded_xx, plt_w_psd_xx] = plt.subplots(nrows=3, ncols=1)
-        plt_psd_xx.plot(freq_space, PSD["xx"])
-        plt_psd_xx.set_ylabel("Amplitude, m/s^2")
-        plt_psd_xx.set_title('X PSD')
-
-        plt_psd_banded_xx.plot(freq_midpoints, Band["xx"])
-        plt_psd_banded_xx.set_ylabel("Amplitude, m/s^2")
-        plt_psd_banded_xx.set_title('X Banded PSD')
-
-        plt_w_psd_xx.plot(wPSD["freq_space"], wPSD["xx"])
-        plt_w_psd_xx.set_ylabel("Amplitude, m/s^2")
-        plt_w_psd_xx.set_xlabel("freq (Hz)")
-        plt_w_psd_xx.set_title("X Windowed PSD")
-        plt.tight_layout()
+        figure = [
+            ["X PSD", "", "", freq_space, PSD["xx"]],
+            ["X Banded PSD", "", "", freq_midpoints, Band["xx"]],
+            ["X Windowed PSD", "freq (Hz)", "", wPSD["freq_space"], wPSD["xx"]]
+        ]
+        fig, axs = plt.subplots(nrows=3, ncols=1)
+        Plotter(fig, axs, figure)
 
         # y
-        fig2, [plt_psd_yy, plt_psd_banded_yy, plt_w_psd_yy] = plt.subplots(nrows=3, ncols=1)
-        plt_psd_yy.plot(freq_space, PSD["yy"])
-        plt_psd_yy.set_ylabel("Amplitude, m/s^2")
-        plt_psd_yy.set_title('Y PSD')
-
-        plt_psd_banded_yy.plot(freq_midpoints, Band["yy"])
-        plt_psd_banded_yy.set_ylabel("Amplitude, m/s^2")
-        plt_psd_banded_yy.set_title('Y Banded PSD')
-
-        plt_w_psd_yy.plot(wPSD["freq_space"], wPSD["yy"])
-        plt_w_psd_yy.set_ylabel("Amplitude, m/s^2")
-        plt_w_psd_yy.set_xlabel("freq (Hz)")
-        plt_w_psd_yy.set_title("Y Windowed PSD")
-        plt.tight_layout()
+        figure = [
+            ["Y PSD", "", "", freq_space, PSD["yy"]],
+            ["Y Banded PSD", "", "", freq_midpoints, Band["yy"]],
+            ["Y Windowed PSD", "freq (Hz)", "", wPSD["freq_space"], wPSD["yy"]]
+        ]
+        fig, axs = plt.subplots(nrows=3, ncols=1)
+        Plotter(fig, axs, figure)
 
         # Z
-        fig3, [plt_psd_zz, plt_psd_banded_zz, plt_w_psd_zz] = plt.subplots(nrows=3, ncols=1)
-        plt_psd_zz.plot(freq_space, PSD["zz"])
-        plt_psd_zz.set_title('Z PSD')
+        figure = [
+            ["Z PSD", "", "", freq_space, PSD["zz"]],
+            ["Z Banded PSD", "", "", freq_midpoints, Band["zz"]],
+            ["Z Windowed PSD", "freq (Hz)", "", wPSD["freq_space"], wPSD["zz"]]
+        ]
+        fig, axs = plt.subplots(nrows=3, ncols=1)
+        Plotter(fig, axs, figure)
 
-        plt_psd_banded_zz.plot(freq_midpoints, Band["zz"])
-        plt_psd_banded_zz.set_xlabel("freq (Hz)")
-        plt_psd_banded_zz.set_title('Z Banded PSD')
-
-        plt_w_psd_zz.plot(wPSD["freq_space"], wPSD["zz"])
-        plt_w_psd_zz.set_title("Z Windowed PSD")
-        plt.tight_layout()
 
     if(displayDS):
-        fig4, [pa1, pb1, pa2, pb2] = plt.subplots(nrows=4, ncols=1)
-        pa1.plot(freq_midpoints, a1)
-        pa1.plot(freq_midpoints, data["wave"]["a1"][i])
-        pa1.set_ylabel("A1")
-        pa1.set_title("Directional Spectra")
-
-        pb1.plot(freq_midpoints, b1)
-        pb1.plot(freq_midpoints, data["wave"]["b1"][i])
-        pb1.set_ylabel("B1")
-
-        pa2.plot(freq_midpoints, a2)
-        pa2.plot(freq_midpoints, data["wave"]["a2"][i])
-        pa2.set_ylabel("A2")
-
-        pb2.plot(freq_midpoints, b2)
-        pb2.plot(freq_midpoints, data["wave"]["b2"][i])
-        pb2.set_ylabel("B2")
-        pb2.set_xlabel("freq (Hz)")
-        plt.tight_layout()
+        figure = [
+            ["Directional Spectra", "", "A1", freq_midpoints, [a1, data["wave"]["a1"][i]]],
+            ["", "", "B1", freq_midpoints, [b1, data["wave"]["b1"][i]] ],
+            ["", "", "A2", freq_midpoints, [a2, data["wave"]["a2"][i]]],
+            ["", "freq (Hz)", "B2", freq_midpoints, [b2, data["wave"]["b2"][i]]]
+        ]
+        fig, axs = plt.subplots(nrows=4, ncols=1)
+        Plotter(fig, axs, figure)
 
 
     if(displayDS or displayPSD):
