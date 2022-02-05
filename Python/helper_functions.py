@@ -1,7 +1,5 @@
 #! /usr/bin/env python3
 #
-# Load the CDIP data that was fetched by extract.py
-# and do some processing on it.
 #
 # URLs:
 # https://docs.google.com/document/d/1Uz_xIAVD2M6WeqQQ_x7ycoM3iKENO38S4Bmn6SasHtY/pub
@@ -27,7 +25,9 @@
 # The Datawell documentation is very useful:
 # https://www.datawell.nl/Portals/0/Documents/Manuals/datawell_manual_libdatawell.pdf
 #
-# Dec-2021, Pat Welch
+# Jan 2022
+# Alex Pitts, Clayton Surgeon, Benjamin Cha
+# In collaboration with Pat Welch
 
 # import argparse
 import numpy as np
@@ -89,7 +89,7 @@ def wcalcPSD(
 
 
 def calcPSD(xFFT:np.array, yFFT:np.array, fs:float, window:str) -> np.array:
-    "calculates the PSD on an output of a FFT"
+    "calculates the PSD on an output of a FFT."
     nfft = xFFT.size
     qOdd = nfft % 2
     n = (nfft - qOdd) * 2 # Number of data points input to FFT
