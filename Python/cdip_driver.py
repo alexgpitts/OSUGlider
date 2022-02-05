@@ -236,16 +236,13 @@ for i in range(len(time_bounds["lower"])):
         # Z
         fig3, [plt_psd_zz, plt_psd_banded_zz, plt_w_psd_zz] = plt.subplots(nrows=3, ncols=1)
         plt_psd_zz.plot(freq_space, PSD["zz"])
-        plt_psd_zz.set_ylabel("Amplitude, m/s^2")
         plt_psd_zz.set_title('Z PSD')
 
         plt_psd_banded_zz.plot(freq_midpoints, Band["zz"])
-        plt_psd_banded_zz.set_ylabel("Amplitude, m/s^2")
         plt_psd_banded_zz.set_xlabel("freq (Hz)")
         plt_psd_banded_zz.set_title('Z Banded PSD')
 
         plt_w_psd_zz.plot(wPSD["freq_space"], wPSD["zz"])
-        plt_w_psd_zz.set_ylabel("Amplitude, m/s^2")
         plt_w_psd_zz.set_title("Z Windowed PSD")
         plt.tight_layout()
 
