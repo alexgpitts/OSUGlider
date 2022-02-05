@@ -5,8 +5,8 @@ import matplotlib.pyplot as plt
 
 
 # plotting perameters. Change for what you want displayed in graphs
-displayPSD = False
-displayDS = False
+displayPSD = True
+displayDS = True
 displayRaw = True
 
 # fft perameters
