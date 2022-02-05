@@ -6,7 +6,8 @@ import matplotlib.pyplot as plt
 
 # plotting perameters. Change for what you want displayed in graphs
 displayPSD = False
-displayDS = True
+displayDS = False
+displayRaw = True
 
 # fft perameters
 window_type = "hann"
@@ -43,6 +44,8 @@ for i in range(len(time_bounds["lower"])):
         time >= time_lower,
         time <= time_upper
     )
+    # print(data["time"][select])
+    # exit(0)
 
     # use select to filter to select the acc data corresponding to the current block
     # time = data["time"][select]
@@ -199,7 +202,16 @@ for i in range(len(time_bounds["lower"])):
     ##########################################
     # plotting
     ##########################################
-    # fig1 = Plotter(freq_space, PSD["xx"], freq_midpoints, Band["xx"], wPSD["freq_space"], wPSD["xx"], "X")
+
+    if(displayRaw):
+        figure = [
+            ["X Acc", "", "m/s^2", data["time"][select], acc["x"]],
+            ["Y Acc", "", "m/s^2", data["time"][select], acc["y"]],
+            ["Z Acc", "Time (s)", "m/s^2", data["time"][select], acc["z"]]
+        ]
+        fig, axs = plt.subplots(nrows=3, ncols=1)
+        Plotter(fig, axs, figure)
+
     if(displayPSD):
 
         # X
@@ -241,7 +253,7 @@ for i in range(len(time_bounds["lower"])):
         Plotter(fig, axs, figure)
 
 
-    if(displayDS or displayPSD):
+    if(displayDS or displayPSD or displayRaw):
         plt.show()
 
     print("\n--------------------------\n")
