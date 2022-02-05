@@ -27,7 +27,9 @@
 # The Datawell documentation is very useful:
 # https://www.datawell.nl/Portals/0/Documents/Manuals/datawell_manual_libdatawell.pdf
 #
-# Dec-2021, Pat Welch
+# Jan 2022
+# Alex Pitts, Clayton Surgeon, Benjamin Cha
+# In collaboration with Pat Welch
 
 # import argparse
 import numpy as np
