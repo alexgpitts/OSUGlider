@@ -36,6 +36,7 @@ from asyncio.windows_events import NULL
 import numpy as np
 import xarray as xr
 import matplotlib.pyplot as plt
+import pandas as pd
 
 
 FREQ = True
@@ -64,8 +65,9 @@ def Plotter(fig, axs, xy) -> NULL:
 
 
 def Rolling_mean(x: np.array, w: np.array) -> np.array:
-    """Smoothes the raw acceleration data with a rolling mean"""
-    return np.convolve(x, np.ones(w), "valid") / w
+    """Smoothes the raw acceleration data with a rolling mean""" 
+    df = pd.DataFrame({'a': x.tolist()})
+    return df['a'].rolling(window=w, center=True).mean().fillna(0).to_numpy()
 
 
 # new
@@ -163,12 +165,9 @@ def Data(filename) -> dict:
             "y": xyz_xr.y.to_numpy(),
             "z": xyz_xr.z.to_numpy()
         }
-        w = 5
+       
         data["acc"] = {
             "t": data["time"],
-            # "x": Rolling_mean(calcAcceleration(xyz_xr.x.to_numpy(), frequency), w),
-            # "y": Rolling_mean(calcAcceleration(xyz_xr.y.to_numpy(), frequency), w),
-            # "z": Rolling_mean(calcAcceleration(xyz_xr.z.to_numpy(), frequency), w),
             "x": calcAcceleration(xyz_xr.x.to_numpy(), frequency),
             "y": calcAcceleration(xyz_xr.y.to_numpy(), frequency),
             "z": calcAcceleration(xyz_xr.z.to_numpy(), frequency),

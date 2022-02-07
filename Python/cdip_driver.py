@@ -1,6 +1,6 @@
 # import Data from CDIP
 import wave
-from helper_functions import (Data, calcPSD, wcalcPSD, wfft, Plotter)
+from helper_functions import (Data, Rolling_mean, calcPSD, wcalcPSD, wfft, Plotter)
 import numpy as np
 import matplotlib.pyplot as plt
 from argparse import ArgumentParser
@@ -46,11 +46,20 @@ def process(fn: str, args: ArgumentParser) -> None:
 
         # use select to filter to select the acc data corresponding to the current block
         # time = data["time"][select]
+        W = 2
         acc = {
-            "x": data["acc"]["x"][select],      # x is northwards
-            "y": data["acc"]["y"][select],      # y is eastwards
-            "z": data["acc"]["z"][select]       # z is upwards
+            "x": Rolling_mean(data["acc"]["x"][select], W),      # x is northwards
+            "y": Rolling_mean(data["acc"]["y"][select], W),      # y is eastwards
+            "z": Rolling_mean(data["acc"]["z"][select], W)       # z is upwards
+            # "x": data["acc"]["x"][select],      # x is northwards
+            # "y": data["acc"]["y"][select],      # y is eastwards
+            # "z": data["acc"]["z"][select],       # z is upwards
         }
+        # for i in acc["x"]:
+        #     print(i)
+        # input("Press enter")
+        # continue
+        
 
         # preform FFT on block
         FFT = {
@@ -240,27 +249,34 @@ def process(fn: str, args: ArgumentParser) -> None:
             plt.show()
 
         print("\n--------------------------\n")
-        # input()
-        exit(0)  # comment out if you want to proccess all the blocks of data
+
+        # exit(0)  # comment out if you want to proccess all the blocks of data
 
 
-parser = ArgumentParser()
-grp = parser.add_mutually_exclusive_group()
-# type --raw before nc file
-parser.add_argument("--raw", action="store_true", help="Raw acceleration data")
-# type --welch before nc file
-grp.add_argument("--welch", action="store_true", help="Welch Method")
-# type --banding before nc file
-grp.add_argument("--banding", action="store_true", help="Banding")
-# type --DS before nc file
-grp.add_argument("--norm", action="store_true", help="Normal FFT PSD")
-parser.add_argument("--ds", action="store_true",
-                    help="Directional Spectrum coefficients")
-parser.add_argument("--graph", action="store_true",
-                    help="Turns graphs on")
-parser.add_argument("nc", nargs="+", type=str,
-                    help="netCDF file to process")  # typed after commands
-args = parser.parse_args()
 
-for fn in args.nc:
-    process(fn, args)
+def main():
+    parser = ArgumentParser()
+    grp = parser.add_mutually_exclusive_group()
+    # type --raw before nc file
+    parser.add_argument("--raw", action="store_true", help="Raw acceleration data")
+    # type --welch before nc file
+    grp.add_argument("--welch", action="store_true", help="Welch Method")
+    # type --banding before nc file
+    grp.add_argument("--banding", action="store_true", help="Banding")
+    # type --DS before nc file
+    grp.add_argument("--norm", action="store_true", help="Normal FFT PSD")
+    parser.add_argument("--ds", action="store_true",
+                        help="Directional Spectrum coefficients")
+    parser.add_argument("--graph", action="store_true",
+                        help="Turns graphs on")
+    parser.add_argument("nc", nargs="+", type=str,
+                        help="netCDF file to process")  # typed after commands
+    args = parser.parse_args()
+
+    for fn in args.nc:
+        process(fn, args)
+
+
+
+if __name__ == "__main__":
+    main()

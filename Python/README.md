@@ -1,6 +1,6 @@
 # Ocean wave measurements (Python Implementation)
 
-This program needs numpy, matplotlib, and xarray installed to run. To display different graphs, change the plotting perimeter boolean values towards the top of the driver file.
+This program needs numpy, matplotlib, netCDF4, and xarray installed to run. To display different graphs, change the plotting perimeter boolean values towards the top of the driver file.
 
 Current Status: 
 As of now, we have most of the calculations performed on some test data from CDIP. 

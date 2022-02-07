@@ -8,7 +8,7 @@ all:
 
 
 banding:
-# display with raw acceleration data with banding fft PSD and directional spectral
+# display with raw acceleration data with banding fft PSD and directional spectral (only one working right now)
 	.\cdip_driver.py --raw --banding --ds ".\067.20201225_1200.20201225_1600.nc"
 	
 
