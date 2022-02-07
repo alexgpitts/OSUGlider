@@ -42,7 +42,7 @@ FREQ = True
 TXYZ = True
 WAVE = True
 META = True
-filename = "./067.20201225_1200.20201225_1600.nc"
+# filename = "./067.20201225_1200.20201225_1600.nc"
 
 
 def Plotter(fig, axs, xy) -> NULL:
@@ -63,21 +63,20 @@ def Plotter(fig, axs, xy) -> NULL:
     plt.tight_layout()
 
 
-def Rolling_mean(x:np.array, w:np.array) -> np.array:
+def Rolling_mean(x: np.array, w: np.array) -> np.array:
     """Smoothes the raw acceleration data with a rolling mean"""
     return np.convolve(x, np.ones(w), "valid") / w
 
 
-
 # new
-def Bias(width:int, window:str="hann") -> np.array:
+def Bias(width: int, window: str = "hann") -> np.array:
     """returns a either a boxcar, or hann window"""
     return np.ones(width) if window == "boxcar" else (
         0.5*(1 - np.cos(2*np.pi*np.arange(width) / (width - 0)))
     )
 
 
-def wfft(data:np.array, width:int, window:str="hann") -> list[np.array]:
+def wfft(data: np.array, width: int, window: str = "hann") -> list[np.array]:
     """Splits the acceleration data into widows, 
     preforms FFTs on them returning a list of all the windows
     """
@@ -92,10 +91,10 @@ def wfft(data:np.array, width:int, window:str="hann") -> list[np.array]:
 
 
 def wcalcPSD(
-        A_FFT_windows:list[np.array], 
-        B_FFT_windows:list[np.array],
-        fs:float,
-        window:str) -> np.array:
+        A_FFT_windows: list[np.array],
+        B_FFT_windows: list[np.array],
+        fs: float,
+        window: str) -> np.array:
     """calculates the PSD of the FFT output preformed with the windowing method.
     After calculateing the PSD of each window, the resulting lists are averaged together"""
 
@@ -110,18 +109,18 @@ def wcalcPSD(
     return spectrums / len(A_FFT_windows)
 
 
-def calcPSD(xFFT:np.array, yFFT:np.array, fs:float, window:str) -> np.array:
+def calcPSD(xFFT: np.array, yFFT: np.array, fs: float, window: str) -> np.array:
     "calculates the PSD on an output of a FFT"
     nfft = xFFT.size
     qOdd = nfft % 2
-    n = (nfft - qOdd) * 2 # Number of data points input to FFT
-    w = Bias(n, window) # Get the window used
+    n = (nfft - qOdd) * 2  # Number of data points input to FFT
+    w = Bias(n, window)  # Get the window used
     wSum = (w * w).sum()
     psd = (xFFT.conjugate() * yFFT) / (fs * wSum)
     if not qOdd:       # Even number of FFT bins
         psd[1:] *= 2   # Real FFT -> double for non-zero freq
     else:              # last point unpaired in Nyquist freq
-        psd[1:-1] *= 2 # Real FFT -> double for non-zero freq
+        psd[1:-1] *= 2  # Real FFT -> double for non-zero freq
     return psd
 
 
@@ -135,7 +134,7 @@ def calcAcceleration(x: np.array, fs: float) -> np.array:
     return dx2 * fs * fs
 
 
-def Data() -> dict:
+def Data(filename) -> dict:
     """Master data reading function. Reads the .nc file from CDIP.
     The data is stored in dictionary (data), which contains many dictionaries 
     to hold information. Examples include: acceleration data, frequency bounds, 
@@ -177,19 +176,20 @@ def Data() -> dict:
 
     if WAVE:
         data["wave"] = {
-            "sig-height": wave_xr.Hs,
-            "avg-period": wave_xr.Ta,
-            "peak-period": wave_xr.Tp,
-            "mean-zero-upcross-period": wave_xr.Tz,
-            "peak-direction": wave_xr.Dp,
-            "peak-PSD": wave_xr.PeakPSD,
-            "a1": wave_xr.A1,
-            "b1": wave_xr.B1,
-            "a2": wave_xr.A2,
-            "b2": wave_xr.B2,
+            "sig-height": wave_xr.Hs.to_numpy(),
+            "avg-period": wave_xr.Ta.to_numpy(),
+            "peak-period": wave_xr.Tp.to_numpy(),
+            "mean-zero-upcross-period": wave_xr.Tz.to_numpy(),
+            "peak-direction": wave_xr.Dp.to_numpy(),
+            "peak-PSD": wave_xr.PeakPSD.to_numpy(),
+            "a1": wave_xr.A1.to_numpy(),
+            "b1": wave_xr.B1.to_numpy(),
+            "a2": wave_xr.A2.to_numpy(),
+            "b2": wave_xr.B2.to_numpy(),
         }
 
-        data["wave"]["time-bounds"] = {
+        # data["wave"]["time-bounds"] = {
+        data["time-bounds"] = {
             "lower": wave_xr.TimeBounds[:, 0].to_numpy(),
             "upper": wave_xr.TimeBounds[:, 1].to_numpy()
         }
@@ -205,5 +205,3 @@ def Data() -> dict:
         }
 
     return data
-
-
