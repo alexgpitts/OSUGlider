@@ -17,7 +17,8 @@ As of now, we have most of the calculations performed on some test data from CDI
 Some of our next steps: 
 1) Currently we only have the banding option for command line arguments, we need to add welch and normal calculations as well
 2) We also need alternative windowing options for banding like we set up for the welch method. 
-3) Create a testing suite for running large amounts of CDIP data through the program. 
+3) We need a check for not running calculations on the blocks of incomplete data from CDIP
+4) Create a testing suite for running large amounts of CDIP data through the program. 
 
 
 Example Output:  
