@@ -21,4 +21,4 @@ Some of our next steps:
 
 
 Example Output:  
-![builds](https://github.com/alexgpitts/OSUGlider/blob/main/ProjectImages/python_output.png?raw=true)
+![builds](../ProjectImages/python_output.png?raw=true)
