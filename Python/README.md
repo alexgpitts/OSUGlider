@@ -2,8 +2,8 @@
 
 This program needs numpy, matplotlib, netCDF4, and xarray installed to run. To display different graphs, change the plotting perimeter boolean values towards the top of the driver file.
 
-This file takes command lines 
-ie: cdip_driver.py [--raw] [--welch | --banding | --norm] [--ds] [--graph] nc [nc ...]
+This file takes command lines<br /> 
+ie: cdip_driver.py [--raw] [--welch | --banding | --norm] [--ds] [--graph] nc [nc ...] <br />
 where: <br />
     1) --raw plots the raw acceleration data <br />
     2) --welch, --banding, or --norm chooses the calculation method <br />
@@ -11,7 +11,7 @@ where: <br />
     4) --graph chooses if you want to plot the resulting PSD calculated from the chosen calculation method <br />
     5) nc is the .nc file you wish to process <br />
 
-Current Status: 
+Current Status: <br />
 As of now, we have most of the calculations performed on some test data from CDIP. 
 
 Some of our next steps: 
