@@ -35,6 +35,7 @@ def process(fn: str, args: ArgumentParser) -> None:
 
         time_lower = time_bounds["lower"][i]
         time_upper = time_bounds["upper"][i]
+        # print(time_lower, " - ", time_upper)
 
         # bit mask so as to select only within the bounds of one lower:upper range pair
         select = np.logical_and(
