@@ -5,11 +5,11 @@ This program needs numpy, matplotlib, netCDF4, and xarray installed to run. To d
 This file takes command lines 
 ie: cdip_driver.py [--raw] [--welch | --banding | --norm] [--ds] [--graph] nc [nc ...]
 where:
-    1) --raw plots the raw acceleration data
-    2) --welch, --banding, or --norm chooses the calculation method
-    3) --ds plots the directional spectra coefficients compared with CDIPs calculations
-    4) --graph chooses if you want to plot the resulting PSD calculated from the chosen calculation method
-    5) nc is the .nc file you wish to process 
+    1) --raw plots the raw acceleration data <br />
+    2) --welch, --banding, or --norm chooses the calculation method <br />
+    3) --ds plots the directional spectra coefficients compared with CDIPs calculations <br />
+    4) --graph chooses if you want to plot the resulting PSD calculated from the chosen calculation method <br />
+    5) nc is the .nc file you wish to process <br />
 
 Current Status: 
 As of now, we have most of the calculations performed on some test data from CDIP. 
