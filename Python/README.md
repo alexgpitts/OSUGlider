@@ -4,7 +4,7 @@ This program needs numpy, matplotlib, netCDF4, and xarray installed to run. To d
 
 This file takes command lines 
 ie: cdip_driver.py [--raw] [--welch | --banding | --norm] [--ds] [--graph] nc [nc ...]
-where:
+where: <br />
     1) --raw plots the raw acceleration data <br />
     2) --welch, --banding, or --norm chooses the calculation method <br />
     3) --ds plots the directional spectra coefficients compared with CDIPs calculations <br />
