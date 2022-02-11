@@ -321,7 +321,7 @@ def main():
     
     # calculation options
     grp.add_argument("--welch", action="store_true", help="Welch Method")
-    grp.add_argument("--banding", action="store_true", help="Banding")
+    grp.add_argument("--banding", action="store_true", help="Banding Method")
     
     # optional args
     parser.add_argument("--hann", action="store_true", help="to choose hann windowing method")

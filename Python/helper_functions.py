@@ -48,7 +48,8 @@ META = True
 
 def Plotter(fig, axs, xy) -> NULL:
     """Takes a Figure from matplotlib, the array for the figure, and a list of data to plot,
-    data in xy stored as a list of lists where xy = [["title", "namex", "namey", [x], [y]], [...]]
+    data in xy stored as a list of lists where xy = [["title", "namex", "namey", [x], [y]], [...]] 
+    where x and y can be lists of plots themselves
     """
     index = 0
     for i in axs.reshape(-1):
