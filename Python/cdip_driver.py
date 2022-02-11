@@ -153,7 +153,7 @@ def process(fn: str, args: ArgumentParser) -> None:
 
             dp = np.arctan2(b1[a0.argmax()], a1[a0.argmax()])  # radians
 
-            Output["banded"] = {
+            Output["welch"] = {
                 "Hs": 4 * np.sqrt(m0),
                 "Ta": m0/m1, #average period
                 "Tp": tp,  # peak wave period
@@ -170,9 +170,9 @@ def process(fn: str, args: ArgumentParser) -> None:
                 "b2": -2 * wPSD["xy"].real / denom,
             }
             print("Calculated Data using Welch method \"{0}\" window: ".format(window_type))
-            for j in Output["banded"]:
-                if np.isscalar(Output["banded"][j]):
-                    print(j, "=", Output["banded"][j])
+            for j in Output["welch"]:
+                if np.isscalar(Output["welch"][j]):
+                    print(j, "=", Output["welch"][j])
         welch(args.welch)
 
 
@@ -278,25 +278,28 @@ def process(fn: str, args: ArgumentParser) -> None:
         if(args.ds):
             if args.banding:
                 figure = [
-                    ["Directional Spectra", "", "A1",
+                    ["Directional Spectra with banding", "", "A1",
                         freq_midpoints, [Output["banded"]["a1"], data["wave"]["a1"][i]]],
                     ["", "", "B1", freq_midpoints, [Output["banded"]["b1"], data["wave"]["b1"][i]]],
                     ["", "", "A2", freq_midpoints, [Output["banded"]["a2"], data["wave"]["a2"][i]]],
                     ["", "freq (Hz)", "B2", freq_midpoints, [Output["banded"]["b2"], data["wave"]["b2"][i]]]
                 ]
+                fig, axs = plt.subplots(nrows=4, ncols=1)
+                Plotter(fig, axs, figure)
             elif(args.welch):
                 figure = [
-                    ["Directional Spectra", "", "A1",
-                        freq_midpoints, [Output["banded"]["a1"], data["wave"]["a1"][i]]],
-                    ["", "", "B1", freq_midpoints, [Output["banded"]["b1"], data["wave"]["b1"][i]]],
-                    ["", "", "A2", freq_midpoints, [Output["banded"]["a2"], data["wave"]["a2"][i]]],
-                    ["", "freq (Hz)", "B2", freq_midpoints, [Output["banded"]["b2"], data["wave"]["b2"][i]]]
+                    ["Directional Spectra with welch", "", "A1",
+                        [wPSD["freq_space"], freq_midpoints], [Output["welch"]["a1"], data["wave"]["a1"][i]]],
+                    ["", "", "B1", [wPSD["freq_space"], freq_midpoints], [Output["welch"]["b1"], data["wave"]["b1"][i]]],
+                    ["", "", "A2", [wPSD["freq_space"], freq_midpoints], [Output["welch"]["a2"], data["wave"]["a2"][i]]],
+                    ["", "freq (Hz)", "B2", [wPSD["freq_space"], freq_midpoints], [Output["welch"]["b2"], data["wave"]["b2"][i]]]
                 ]
+                fig, axs = plt.subplots(nrows=4, ncols=1)
+                Plotter(fig, axs, figure)
             else:
                 print("Error: please enter calculation option (Welch or Banding)")
                 exit(0)
-            fig, axs = plt.subplots(nrows=4, ncols=1)
-            Plotter(fig, axs, figure)
+            
             
                 
         if(args.welch or args.banding or args.raw or args.ds or args.norm):

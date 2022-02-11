@@ -55,11 +55,22 @@ def Plotter(fig, axs, xy) -> NULL:
         i.set_title(xy[index][0])
         i.set_xlabel(xy[index][1])
         i.set_ylabel(xy[index][2])
-        if isinstance(xy[index][4], list):
+        if isinstance(xy[index][3], list) and isinstance(xy[index][4], list):
+            for (j, k) in zip(xy[index][3], xy[index][4]):
+                i.plot(j, k)
+
+        elif isinstance(xy[index][3], list):
+            for j in xy[index][3]:
+                i.plot(j, xy[index][4])
+
+        elif isinstance(xy[index][4], list):
             for j in xy[index][4]:
                 i.plot(xy[index][3], j)
+
         else:
             i.plot(xy[index][3], xy[index][4])
+
+
         index += 1
     plt.tight_layout()
 
