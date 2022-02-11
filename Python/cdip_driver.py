@@ -1,6 +1,6 @@
 # import Data from CDIP
 import wave
-from helper_functions import (Data, Rolling_mean, calcPSD, wcalcPSD, wfft, Plotter)
+from helper_functions import (Data, Rolling_mean, calcPSD, wcalcPSD, wfft, Plotter, Bias)
 import numpy as np
 import matplotlib.pyplot as plt
 from argparse import ArgumentParser
@@ -8,8 +8,11 @@ from argparse import ArgumentParser
 
 def process(fn: str, args: ArgumentParser) -> None:
 
-    # fft perameters
-    window_type = "hann"
+    # windowing perameters
+    if(args.hann):
+        window_type = "hann"
+    else:
+        window_type = "boxcar"
 
     # call master data function to extract all our data from the .nc file
     data = Data(args.nc[0])
@@ -25,10 +28,6 @@ def process(fn: str, args: ArgumentParser) -> None:
     freq_upper = freq_bounds["upper"]
     freq_midpoints = freq_bounds["joint"].mean(axis=1)
 
-    # print(1/freq_midpoints)
-    # print(data["freq"]["bandwidth"] )
-    # exit(0)
-
     # loop runs through every analisis block, displaying output calculations
     # and graphs at the end of each loop run
     for i in range(len(time_bounds["lower"])):
@@ -42,25 +41,17 @@ def process(fn: str, args: ArgumentParser) -> None:
             time >= time_lower,
             time <= time_upper
         )
-        # print(data["time"][select])
-        # exit(0)
 
         # use select to filter to select the acc data corresponding to the current block
         # time = data["time"][select]
-        W = 2
+       
+        averaging_window = 2
         acc = {
-            "x": Rolling_mean(data["acc"]["x"][select], W),      # x is northwards
-            "y": Rolling_mean(data["acc"]["y"][select], W),      # y is eastwards
-            "z": Rolling_mean(data["acc"]["z"][select], W)       # z is upwards
-            # "x": data["acc"]["x"][select],      # x is northwards
-            # "y": data["acc"]["y"][select],      # y is eastwards
-            # "z": data["acc"]["z"][select],       # z is upwards
+            "x": Rolling_mean(data["acc"]["x"][select], averaging_window),      # x is northwards
+            "y": Rolling_mean(data["acc"]["y"][select], averaging_window),      # y is eastwards
+            "z": Rolling_mean(data["acc"]["z"][select], averaging_window)       # z is upwards
+
         }
-        # for i in acc["x"]:
-        #     print(i)
-        # input("Press enter")
-        # continue
-        
 
         # preform FFT on block
         FFT = {
@@ -94,6 +85,10 @@ def process(fn: str, args: ArgumentParser) -> None:
             "yy": wcalcPSD(wFFT["y"], wFFT["y"], data["frequency"], window_type).real,
             "zz": wcalcPSD(wFFT["z"], wFFT["z"], data["frequency"], window_type).real,
 
+            "xy": wcalcPSD(wFFT["x"], wFFT["y"], data["frequency"], window_type),
+            "zx": wcalcPSD(wFFT["z"], wFFT["x"], data["frequency"], window_type),
+            "zy": wcalcPSD(wFFT["z"], wFFT["y"], data["frequency"], window_type),
+
             "freq_space": np.fft.rfftfreq(wFFT["z"][0].size*2-1, 1/data["frequency"])
         }
 
@@ -108,17 +103,21 @@ def process(fn: str, args: ArgumentParser) -> None:
 
         count = freq_select.sum(axis=1)
 
-        # Preform Baniding on the PSD. Averages the data withen each bin.
+        windowing_method = Bias(len(freq_space), window_type)
+
         Band = {
-            "xx": (freq_select * PSD["xx"]).sum(axis=1) / count,
-            "yy": (freq_select * PSD["yy"]).sum(axis=1) / count,
-            "zz": (freq_select * PSD["zz"]).sum(axis=1) / count,
+            "xx": (freq_select * PSD["xx"] * windowing_method).sum(axis=1) / count,
+            "yy": (freq_select * PSD["yy"] * windowing_method).sum(axis=1) / count,
+            "zz": (freq_select * PSD["zz"] * windowing_method).sum(axis=1) / count,
 
-            "xy": (freq_select * PSD["xy"]).sum(axis=1) / count,
-            "zx": (freq_select * PSD["zx"]).sum(axis=1) / count,
+            "xy": (freq_select * PSD["xy"] * windowing_method).sum(axis=1) / count,
+            "zx": (freq_select * PSD["zx"] * windowing_method).sum(axis=1) / count,
 
-            "zy": (freq_select * PSD["zy"]).sum(axis=1) / count,
+            "zy": (freq_select * PSD["zy"] * windowing_method).sum(axis=1) / count,
         }
+
+
+        
 
         print("Processing Block {0}".format(i))
 
@@ -128,16 +127,65 @@ def process(fn: str, args: ArgumentParser) -> None:
 
         Output = {}
         outputs.append(Output)
+        ##########################################
+        # Calculations using the welch method
+        ##########################################
+        def welch(run: bool):            
+            if run == False:
+                return
+
+            a0 = wPSD["zz"][1:] / np.square(np.square(2 * np.pi * wPSD["freq_space"][1:]))
+
+            m0 = (a0 * wPSD["freq_space"][1]).sum()
+            m1 = (a0*wPSD["freq_space"][1:]*wPSD["freq_space"][1]).sum()
+
+            mm1 = (a0/wPSD["freq_space"][1:]*wPSD["freq_space"][1]).sum()
+            te = mm1/m0  # mean energy period
+
+            m2 = (a0*np.square(wPSD["freq_space"][1:]) * wPSD["freq_space"][1]).sum()
+
+            tp = 1/wPSD["freq_space"][1:][a0.argmax()]
+
+            denom = np.sqrt(wPSD["zz"] * (wPSD["xx"] + wPSD["yy"]))
+            a1 = wPSD["zx"].imag / denom
+            b1 = -wPSD["zy"].imag / denom
+            denom = wPSD["xx"] + wPSD["yy"]
+
+            dp = np.arctan2(b1[a0.argmax()], a1[a0.argmax()])  # radians
+
+            Output["banded"] = {
+                "Hs": 4 * np.sqrt(m0),
+                "Ta": m0/m1, #average period
+                "Tp": tp,  # peak wave period
+                "wave_energy_ratio": te/tp,
+                "Tz": np.sqrt(m0/m2),
+                "Dp": np.arctan2(b1[a0.argmax()], a1[a0.argmax()]),
+                "PeakPSD": a0.max(),
+                "te": te, # mean energy period
+                "dp_true": np.degrees(dp) % 360,
+                "dp_mag": np.degrees(dp+data["declination"]) % 360,
+                "a1": a1,
+                "b1": b1,
+                "a2": (wPSD["xx"] - wPSD["yy"]) / denom,
+                "b2": -2 * wPSD["xy"].real / denom,
+            }
+            print("Calculated Data using Welch method \"{0}\" window: ".format(window_type))
+            for j in Output["banded"]:
+                if np.isscalar(Output["banded"][j]):
+                    print(j, "=", Output["banded"][j])
+        welch(args.welch)
+
 
         ##########################################
         # Calculations using the banded method
         ##########################################
 
         def banded(run: bool):
+            # Preform Baniding on the PSD. Averages the data withen each bin.\
+            
             if run == False:
                 return
-            a0 = Band["zz"] / \
-                np.square(np.square(2 * np.pi * freq_midpoints))
+            a0 = Band["zz"] / np.square(np.square(2 * np.pi * freq_midpoints))
 
             m0 = (a0 * data["freq"]["bandwidth"]).sum()
             m1 = (a0*freq_midpoints*data["freq"]["bandwidth"]).sum()
@@ -173,7 +221,7 @@ def process(fn: str, args: ArgumentParser) -> None:
                 "a2": (Band["xx"] - Band["yy"]) / denom,
                 "b2": -2 * Band["xy"].real / denom,
             }
-            print("Calculated Data: ")
+            print("Calculated Data using Banding and \"{0}\" window: ".format(window_type))
             for j in Output["banded"]:
                 if np.isscalar(Output["banded"][j]):
                     print(j, "=", Output["banded"][j])
@@ -183,6 +231,8 @@ def process(fn: str, args: ArgumentParser) -> None:
         for j in data["wave"]:
             if np.isscalar(data["wave"][j][i]):
                 print(j, "=", data["wave"][j][i])
+
+    
 
         ##########################################
         # plotting
@@ -226,26 +276,29 @@ def process(fn: str, args: ArgumentParser) -> None:
             Plotter(fig, axs, figure)
 
         if(args.ds):
-
-            if(args.banding):
-                A1 = Output["banded"]["a1"]
-                B1 = Output["banded"]["b1"]
-                A2 = Output["banded"]["a2"]
-                B2 = Output["banded"]["b2"]
             if args.banding:
                 figure = [
                     ["Directional Spectra", "", "A1",
-                        freq_midpoints, [A1, data["wave"]["a1"][i]]],
-                    ["", "", "B1", freq_midpoints, [B1, data["wave"]["b1"][i]]],
-                    ["", "", "A2", freq_midpoints, [A2, data["wave"]["a2"][i]]],
-                    ["", "freq (Hz)", "B2", freq_midpoints,
-                     [B2, data["wave"]["b2"][i]]]
+                        freq_midpoints, [Output["banded"]["a1"], data["wave"]["a1"][i]]],
+                    ["", "", "B1", freq_midpoints, [Output["banded"]["b1"], data["wave"]["b1"][i]]],
+                    ["", "", "A2", freq_midpoints, [Output["banded"]["a2"], data["wave"]["a2"][i]]],
+                    ["", "freq (Hz)", "B2", freq_midpoints, [Output["banded"]["b2"], data["wave"]["b2"][i]]]
                 ]
-                fig, axs = plt.subplots(nrows=4, ncols=1)
-                Plotter(fig, axs, figure)
+            elif(args.welch):
+                figure = [
+                    ["Directional Spectra", "", "A1",
+                        freq_midpoints, [Output["banded"]["a1"], data["wave"]["a1"][i]]],
+                    ["", "", "B1", freq_midpoints, [Output["banded"]["b1"], data["wave"]["b1"][i]]],
+                    ["", "", "A2", freq_midpoints, [Output["banded"]["a2"], data["wave"]["a2"][i]]],
+                    ["", "freq (Hz)", "B2", freq_midpoints, [Output["banded"]["b2"], data["wave"]["b2"][i]]]
+                ]
             else:
-                print("Error: please enter calculation option (Welch, Banding, Norm)")
-
+                print("Error: please enter calculation option (Welch or Banding)")
+                exit(0)
+            fig, axs = plt.subplots(nrows=4, ncols=1)
+            Plotter(fig, axs, figure)
+            
+                
         if(args.welch or args.banding or args.raw or args.ds or args.norm):
             plt.show()
 
@@ -256,22 +309,28 @@ def process(fn: str, args: ArgumentParser) -> None:
 
 
 def main():
+
+    #######################################
+    # command line stuff
+    #######################################
     parser = ArgumentParser()
     grp = parser.add_mutually_exclusive_group()
-    # type --raw before nc file
-    parser.add_argument("--raw", action="store_true", help="Raw acceleration data")
-    # type --welch before nc file
+    
+    # calculation options
     grp.add_argument("--welch", action="store_true", help="Welch Method")
-    # type --banding before nc file
     grp.add_argument("--banding", action="store_true", help="Banding")
-    # type --DS before nc file
-    grp.add_argument("--norm", action="store_true", help="Normal FFT PSD")
-    parser.add_argument("--ds", action="store_true",
-                        help="Directional Spectrum coefficients")
-    parser.add_argument("--graph", action="store_true",
-                        help="Turns graphs on")
-    parser.add_argument("nc", nargs="+", type=str,
-                        help="netCDF file to process")  # typed after commands
+    
+    # optional args
+    parser.add_argument("--hann", action="store_true", help="to choose hann windowing method")
+    parser.add_argument("--boxcar", action="store_true", help="to choose boxcar windowing method")
+    parser.add_argument("--norm", action="store_true", help="Normal FFT PSD")
+    parser.add_argument("--ds", action="store_true", help="Directional Spectrum coefficients")
+    parser.add_argument("--graph", action="store_true", help="Turns graphs on")
+    parser.add_argument("--raw", action="store_true", help="Raw acceleration data")
+
+    # required
+    parser.add_argument("nc", nargs="+", type=str, help="netCDF file to process")  # typed after commands
+
     args = parser.parse_args()
 
     for fn in args.nc:

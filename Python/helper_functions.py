@@ -197,6 +197,7 @@ def Data(filename) -> dict:
         data["freq"] = {
             "bandwidth": wave_xr.Bandwidth.to_numpy(),
         }
+        
         data["freq"]["bounds"] = {
             "lower": wave_xr.FreqBounds[:, 0].to_numpy(),
             "upper": wave_xr.FreqBounds[:, 1].to_numpy(),
