@@ -75,7 +75,9 @@ def Plotter(fig, axs, xy) -> NULL:
 
 
 def Rolling_mean(x: np.array, w: np.array) -> np.array:
-    """Smoothes the raw acceleration data with a rolling mean""" 
+    """Smoothes the raw acceleration data with a rolling mean. 
+    Accepts data to be smoothed and a window width for the moving average. 
+    """ 
     df = pd.DataFrame({'a': x.tolist()})
     return df['a'].rolling(window=w, center=True).mean().fillna(0).to_numpy()
 
