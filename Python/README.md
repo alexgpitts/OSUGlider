@@ -17,8 +17,9 @@ Current Status: <br />
 As of now, we have most of the calculations performed on some test data from CDIP. 
 
 Some of our next steps: 
-1) We need a check for not running calculations on the blocks of incomplete data from CDIP
-2) Create a testing suite for running large amounts of CDIP data through the program. 
+1) Fix normalization for the welch method using a boxcar window
+2) We need a check for not running calculations on the blocks of incomplete data from CDIP
+3) Create a testing suite for running large amounts of CDIP data through the program. 
 
 
 Example Output:  
