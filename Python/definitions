@@ -1,0 +1,26 @@
+
+
+
+fs					frequency
+declination		
+latitude
+longitude
+depth
+
+x,y,z			displacement
+ax,ay,az		acceleration
+
+
+tLower		Time Bounds Lower
+tUpper		Time Bounds Upper
+
+Hs				Significant Wave Height
+Ta				Average Wave Period
+Tp				Peak Wave Period
+Tz				Mean Zero Upcross Wave Period
+Dp				Peak Wave Direction
+PeakPSD		Peak Wave Power Spectral Density
+
+Bandwidth
+fLower		Frequency Bounds Lower
+fUpper		Frequency Bounds Upper
