@@ -1,7 +1,5 @@
 #! /usr/bin/env python3
 #
-# Load the CDIP data that was fetched by extract.py
-# and do some processing on it.
 #
 # URLs:
 # https://docs.google.com/document/d/1Uz_xIAVD2M6WeqQQ_x7ycoM3iKENO38S4Bmn6SasHtY/pub
@@ -122,7 +120,7 @@ def wcalcPSD(
         spectrums += spectrum
     return spectrums / len(A_FFT_windows)
 
-
+  
 def calcPSD(xFFT: np.array, yFFT: np.array, fs: float, window: str) -> np.array:
     "calculates the PSD on an output of a FFT"
     nfft = xFFT.size
