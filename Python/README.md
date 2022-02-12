@@ -3,9 +3,10 @@
 This program needs numpy, matplotlib, netCDF4, and xarray installed to run. To display different graphs, change the plotting perimeter boolean values towards the top of the driver file.
 
 This file takes command lines<br /> 
-ie: cdip_driver.py [--welch | --banding] [--raw] [--ds] [--graph] nc [nc ...] <br />
+ie: cdip_driver.py [--welch | --banding] [--hann | --boxcar] [--raw] [--ds] [--graph] nc [nc ...] <br />
 where: <br />
     1) --welch, --banding chooses the calculation method <br />
+    2) --hann or --boxcar selects the windowing method <br />
     2) --norm shows the normal fft using built in numpy fft method
     3) --raw plots the raw acceleration data <br />
     4) --ds plots the directional spectra coefficients compared with CDIPs calculations <br />
