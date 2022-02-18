@@ -1,5 +1,4 @@
 # import Data from CDIP
-import wave
 from helper_functions import (Data, Rolling_mean, calcPSD, wcalcPSD, wfft, Plotter, Bias)
 import numpy as np
 import matplotlib.pyplot as plt
@@ -311,7 +310,7 @@ def process(fn: str, args: ArgumentParser) -> None:
 
 
 
-def main():
+def main(raw_args=None):
 
     #######################################
     # command line stuff
@@ -334,7 +333,7 @@ def main():
     # required
     parser.add_argument("nc", nargs="+", type=str, help="netCDF file to process")  # typed after commands
 
-    args = parser.parse_args()
+    args = parser.parse_args(raw_args)
 
     for fn in args.nc:
         process(fn, args)
