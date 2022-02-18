@@ -23,7 +23,7 @@ def test_plotter():
 
 test_plotter()
 
-driver.main(['067.20201225_1200.20201225_1600.nc'])
+driver.main(['--ds', '067.20201225_1200.20201225_1600.nc'])
 driver.main(['--welch', '--hann', '--ds', '--graph', '067.20201225_1200.20201225_1600.nc'])
 driver.main(['--banding', '--ds', '--raw', '--norm', '067.20201225_1200.20201225_1600.nc'])
 driver.main(['--banding', '--ds', '--graph', '--norm', '067.20201225_1200.20201225_1600.nc'])
