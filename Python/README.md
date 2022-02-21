@@ -3,7 +3,7 @@
 This program needs numpy, matplotlib, netCDF4, and xarray installed to run. To display different graphs, change the plotting perimeter boolean values towards the top of the driver file.
 
 This file takes command lines<br /> 
-ie: cdip_driver.py [--welch | --banding] [--hann | --boxcar] [--raw] [--ds] [--graph] nc [nc ...] <br />
+ie: cdip_driver.py [--welch | --banding] [--hann | --boxcar] [--raw] [--ds] [--graph] -o [--output] nc [nc ...] <br />
 where: <br />
     1) --welch, --banding chooses the calculation method <br />
     2) --hann or --boxcar selects the windowing method <br />
@@ -11,7 +11,9 @@ where: <br />
     4) --raw plots the raw acceleration data <br />
     5) --ds plots the directional spectra coefficients compared with CDIPs calculations <br />
     6) --graph chooses if you want to plot the resulting PSD calculated from the chosen calculation method <br />
-    7) nc is the .nc file you wish to process <br />
+    7) -o ".\outputFolder" specifies the output folder for outputted .nc file to go. By default, the outputted data is placed in the same folder as the .nc file that was read from <br />
+    8) nc is the .nc file you wish to process. Takes a sting as input <br />
+
 
 Current Status: <br />
 As of now, we have most of the calculations performed on some test data from CDIP. 
