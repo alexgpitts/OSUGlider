@@ -37,11 +37,99 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 
-FREQ = True
-TXYZ = True
-WAVE = True
-META = True
+
 # filename = "./067.20201225_1200.20201225_1600.nc"
+
+
+def dictMerge(dicts: list) -> dict:
+    """takes in a list of dictionaries with matching layouts and keys, then merges the keys into lists for each key """
+    final_dict = {}
+
+    Process = []
+    Hs = []
+    Ta = []
+    Tp = []
+    wave_energy_ratio = []
+    Tz = []
+    PeakPSD = []
+    te = []
+    Dp = []
+    dp_mag = []
+    A1 = []
+    B1 = []
+    A2 = []
+    B2 = []
+
+    # merge all dictionaries from input list into final_dict{}
+    for i in dicts:
+        Process.append(i["Process"])
+        Hs.append(i["Hs"])
+        Ta.append(i["Ta"])
+        Tp.append(i["Tp"])
+        wave_energy_ratio.append(i["wave_energy_ratio"])
+        Tz.append(i["Tz"])
+        PeakPSD.append(i["PeakPSD"])
+        te.append(i["te"])
+        Dp.append(i["Dp"])
+        dp_mag.append(i["dp_mag"])
+        A1.append(i["A1"])
+        B1.append(i["B1"])
+        A2.append(i["A2"])
+        B2.append(i["B2"])
+    
+    A1_final = xr.DataArray(
+        np.array(A1, dtype=object),
+        dims = ("y", "x"),
+        coords = {
+            "x": (np.arange(1, len(A1[0])+1)).tolist(),
+            "y": (np.arange(1, len(A1)+1)).tolist(),
+        }
+    )
+    B1_final = xr.DataArray(
+        np.array(B1, dtype=object),
+        dims = ("y", "x"),
+        coords = {
+            "x": (np.arange(1, len(B1[0])+1)).tolist(),
+            "y": (np.arange(1, len(B1)+1)).tolist(),
+        }
+    )
+    A2_final = xr.DataArray(
+        np.array(A2, dtype=object),
+        dims = ("y", "x"),
+        coords = {
+            "x": (np.arange(1, len(A2[0])+1)).tolist(),
+            "y": (np.arange(1, len(A2)+1)).tolist(),
+        }
+    )
+    B2_final = xr.DataArray(
+        np.array(B2, dtype=object),
+        dims = ("y", "x"),
+        coords = {
+            "x": (np.arange(1, len(B2[0])+1)).tolist(),
+            "y": (np.arange(1, len(B2)+1)).tolist(),
+        }
+    )
+    
+    final_dict = {
+        "Process": np.array(Process, dtype=object),
+        "Hs": np.array(Hs, dtype=object),
+        "Ta": np.array(Ta, dtype=object),  # average period
+        "Tp": np.array(Tp, dtype=object),  # peak wave period
+        "wave_energy_ratio": np.array(wave_energy_ratio, dtype=object),
+        "Tz": np.array(Tz, dtype=object),
+        # "Dp": np.arctan2(B1[a0.argmax()], A1[a0.argmax()]),
+        "PeakPSD": np.array(PeakPSD, dtype=object),
+        "te": np.array(te, dtype=object),  # mean energy period
+        "Dp": np.array(Dp, dtype=object),
+        "dp_mag": np.array(dp_mag, dtype=object),
+        "A1": A1_final,
+        "B1": B1_final,
+        "A2": A2_final,
+        "B2": B2_final,
+    }
+    # print(final_dict)
+    # exit(0)
+    return final_dict
 
 
 def Plotter(fig, axs, xy) -> NULL:
@@ -148,14 +236,20 @@ def calcAcceleration(x: np.array, fs: float) -> np.array:
     return dx2 * fs * fs
 
 
-def Data(filename) -> dict:
+def Data(args) -> dict:
     """Master data reading function. Reads the .nc file from CDIP.
     The data is stored in dictionary (data), which contains many dictionaries 
     to hold information. Examples include: acceleration data, frequency bounds, 
     expected values calculated by CDIP, etc."""
-    meta_xr = xr.open_dataset(filename, group="Meta")  # For water depth
-    wave_xr = xr.open_dataset(filename, group="Wave")
-    xyz_xr = xr.open_dataset(filename, group="XYZ")
+    FREQ = True
+    TXYZ = True
+    WAVE = args.compare
+    META = True
+    TIMEBOUNDS = True
+
+    meta_xr = xr.open_dataset(args.nc[0], group="Meta")  # For water depth
+    wave_xr = xr.open_dataset(args.nc[0], group="Wave")
+    xyz_xr = xr.open_dataset(args.nc[0], group="XYZ")
 
     depth = float(meta_xr.WaterDepth)
     declination = float(meta_xr.Declination)
@@ -193,17 +287,19 @@ def Data(filename) -> dict:
             "mean-zero-upcross-period": wave_xr.Tz.to_numpy(),
             "peak-direction": wave_xr.Dp.to_numpy(),
             "peak-PSD": wave_xr.PeakPSD.to_numpy(),
-            "a1": wave_xr.A1.to_numpy(),
-            "b1": wave_xr.B1.to_numpy(),
-            "a2": wave_xr.A2.to_numpy(),
-            "b2": wave_xr.B2.to_numpy(),
+            "A1": wave_xr.A1.to_numpy(),
+            "B1": wave_xr.B1.to_numpy(),
+            "A2": wave_xr.A2.to_numpy(),
+            "B2": wave_xr.B2.to_numpy(),
         }
 
+    if TIMEBOUNDS:
         # data["wave"]["time-bounds"] = {
         data["time-bounds"] = {
             "lower": wave_xr.TimeBounds[:, 0].to_numpy(),
             "upper": wave_xr.TimeBounds[:, 1].to_numpy()
         }
+        data["Timebounds"] = wave_xr.TimeBounds
 
     if FREQ:
         data["freq"] = {
@@ -215,5 +311,6 @@ def Data(filename) -> dict:
             "upper": wave_xr.FreqBounds[:, 1].to_numpy(),
             "joint": wave_xr.FreqBounds[:, :].to_numpy()
         }
+        data["FreqBounds"] = wave_xr.FreqBounds
 
     return data

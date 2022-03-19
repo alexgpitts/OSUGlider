@@ -1,6 +1,8 @@
 # import Data from CDIP
+from cmath import nan
 from helper_functions import (
-    Data, Rolling_mean, calcPSD, wcalcPSD, wfft, Plotter, Bias)
+    Data, Rolling_mean, calcPSD, wcalcPSD, wfft, Plotter, Bias, dictMerge)
+from API_test import (banded_cleaned_data)
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -31,7 +33,7 @@ def process(fn: str, args: ArgumentParser) -> None:
         return
 
     # call master data function to extract all our data from the .nc file
-    data = Data(args.nc[0])
+    data = Data(args)
     outputs = []
     datasets = []
 
@@ -76,22 +78,24 @@ def process(fn: str, args: ArgumentParser) -> None:
         if(any(i > 500 for i in acc["x"]) or any(i > 500 for i in acc["y"]) or any(i > 500 for i in acc["z"])):
             print("bad data containing extremely large values\n\n")
             outputs.append({})
-            outputs[i]["error"] = {
-                "Hs": "error",
-                "Ta": "error",  # average period
-                "Tp": "error",  # peak wave period
-                "wave_energy_ratio": "error",
-                "Tz": "error",
-                "Dp": "error",
-                "PeakPSD": "error",
-                "te": "error",  # mean energy period
-                "dp_true": "error",
-                "dp_mag": "error",
-                "a1": "error",
-                "b1": "error",
-                "a2": "error",
-                "b2": "error",
+            outputs[i] = {
+                "Process": "error",
+                "Hs": nan,
+                "Ta": nan,  # average period
+                "Tp": nan,  # peak wave period
+                "wave_energy_ratio": nan,
+                "Tz": nan,
+                # "Dp": nan,
+                "PeakPSD": nan,
+                "te": nan,  # mean energy period
+                "Dp": nan,
+                "dp_mag": nan,
+                "A1": np.zeros(len(outputs[i-1]["A1"])),
+                "B1": np.zeros(len(outputs[i-1]["B1"])),
+                "A2": np.zeros(len(outputs[i-1]["A2"])),
+                "B2": np.zeros(len(outputs[i-1]["B2"])),
             }
+            datasets.append(xr.Dataset(outputs[i]))
             continue
 
         # preform FFT on block
@@ -100,7 +104,9 @@ def process(fn: str, args: ArgumentParser) -> None:
             "y": np.fft.rfft(acc["y"], n=acc["z"].size),  # eastwards
             "z": np.fft.rfft(acc["z"], n=acc["z"].size),  # upwards
         }
-
+        print("This is the main file!", FFT["x"])
+        banded_cleaned_data(FFT)
+        
         # preform FFT on block using welch mothod
         wFFT = {
             "x": wfft(acc["x"], 2**8, window_type),
@@ -185,34 +191,35 @@ def process(fn: str, args: ArgumentParser) -> None:
             tp = 1/wPSD["freq_space"][1:][a0.argmax()]
 
             denom = np.sqrt(wPSD["zz"] * (wPSD["xx"] + wPSD["yy"]))
-            a1 = wPSD["zx"].imag / denom
-            b1 = -wPSD["zy"].imag / denom
+            A1 = wPSD["zx"].imag / denom
+            B1 = -wPSD["zy"].imag / denom
             denom = wPSD["xx"] + wPSD["yy"]
 
-            dp = np.arctan2(b1[a0.argmax()], a1[a0.argmax()])  # radians
+            dp = np.arctan2(B1[a0.argmax()], A1[a0.argmax()])  # radians
 
-            outputs[i]["welch"] = {
+            outputs[i] = {
+                "Process": "welch",
                 "Hs": 4 * np.sqrt(m0),
                 "Ta": m0/m1,  # average period
                 "Tp": tp,  # peak wave period
                 "wave_energy_ratio": te/tp,
                 "Tz": np.sqrt(m0/m2),
-                "Dp": np.arctan2(b1[a0.argmax()], a1[a0.argmax()]),
+                # "Dp": np.arctan2(B1[a0.argmax()], A1[a0.argmax()]),
                 "PeakPSD": a0.max(),
                 "te": te,  # mean energy period
-                "dp_true": np.degrees(dp) % 360,
+                "Dp": np.degrees(dp) % 360,
                 "dp_mag": np.degrees(dp+data["declination"]) % 360,
-                "a1": a1,
-                "b1": b1,
-                "a2": (wPSD["xx"] - wPSD["yy"]) / denom,
-                "b2": -2 * wPSD["xy"].real / denom,
+                "A1": A1,
+                "B1": B1,
+                "A2": ((wPSD["xx"] - wPSD["yy"]) / denom),
+                "B2": (-2 * wPSD["xy"].real / denom),
             }
-            datasets.append(xr.Dataset(outputs[i]["welch"]))
+            datasets.append(xr.Dataset(outputs[i]))
             print("Calculated Data using Welch method \"{0}\" window: ".format(
                 window_type))
-            for j in outputs[i]["welch"]:
-                if np.isscalar(outputs[i]["welch"][j]):
-                    print(j, "=", outputs[i]["welch"][j])
+            for j in outputs[i]:
+                if np.isscalar(outputs[i][j]):
+                    print(j, "=", outputs[i][j])
 
         welch(args.welch)
 
@@ -238,42 +245,44 @@ def process(fn: str, args: ArgumentParser) -> None:
             tp = 1/freq_midpoints[a0.argmax()]
 
             denom = np.sqrt(Band["zz"] * (Band["xx"] + Band["yy"]))
-            a1 = Band["zx"].imag / denom
-            b1 = -Band["zy"].imag / denom
+            A1 = Band["zx"].imag / denom
+            B1 = -Band["zy"].imag / denom
             denom = Band["xx"] + Band["yy"]
 
             dp = np.arctan2(
-                b1[a0.argmax()], a1[a0.argmax()])  # radians
+                B1[a0.argmax()], A1[a0.argmax()])  # radians
 
-            outputs[i]["banded"] = {
+            outputs[i] = {
+                "Process": "banding",
                 "Hs": 4 * np.sqrt(m0),
                 "Ta": m0/m1,
                 "Tp": tp,  # peak wave period
                 "wave_energy_ratio": te/tp,
                 "Tz": np.sqrt(m0/m2),
-                "Dp": np.arctan2(b1[a0.argmax()], a1[a0.argmax()]),
+                # "Dp": np.arctan2(B1[a0.argmax()], A1[a0.argmax()]),
                 "PeakPSD": a0.max(),
                 "te": te,
-                "dp_true": np.degrees(dp) % 360,
+                "Dp": np.degrees(dp) % 360,
                 "dp_mag": np.degrees(dp+data["declination"]) % 360,
-                "a1": a1,
-                "b1": b1,
-                "a2": (Band["xx"] - Band["yy"]) / denom,
-                "b2": -2 * Band["xy"].real / denom,
+                "A1": (A1),
+                "B1": (B1),
+                "A2": ((Band["xx"] - Band["yy"]) / denom),
+                "B2": (-2 * Band["xy"].real / denom),
             }
-            datasets.append(xr.Dataset(outputs[i]["welch"]))
+            datasets.append(xr.Dataset(outputs[i]))
             print("Calculated Data using Banding and \"{0}\" window: ".format(
                 window_type))
-            for j in outputs[i]["banded"]:
-                if np.isscalar(outputs[i]["banded"][j]):
-                    print(j, "=", outputs[i]["banded"][j])
+            for j in outputs[i]:
+                if np.isscalar(outputs[i][j]):
+                    print(j, "=", outputs[i][j])
 
         banded(args.banding)
 
-        print("\n\nCDIP Data: ")
-        for j in data["wave"]:
-            if np.isscalar(data["wave"][j][i]):
-                print(j, "=", data["wave"][j][i])
+        if args.compare:
+            print("\n\nCDIP Data: ")
+            for j in data["wave"]:
+                if np.isscalar(data["wave"][j][i]):
+                    print(j, "=", data["wave"][j][i])
 
         ##########################################
         # plotting
@@ -318,31 +327,44 @@ def process(fn: str, args: ArgumentParser) -> None:
 
         if(args.ds):
             if args.banding:
-                figure = [
-                    ["Directional Spectra with banding", "", "A1",
-                        freq_midpoints, [outputs[i]["banded"]["a1"], data["wave"]["a1"][i]]],
-                    ["", "", "B1", freq_midpoints, [
-                        outputs[i]["banded"]["b1"], data["wave"]["b1"][i]]],
-                    ["", "", "A2", freq_midpoints, [
-                        outputs[i]["banded"]["a2"], data["wave"]["a2"][i]]],
-                    ["", "freq (Hz)", "B2", freq_midpoints, [
-                        outputs[i]["banded"]["b2"], data["wave"]["b2"][i]]]
-                ]
-                fig, axs = plt.subplots(nrows=4, ncols=1)
-                Plotter(fig, axs, figure)
+                if args.compare:
+                    figure = [
+                        ["Directional Spectra with banding", "", "A1", freq_midpoints, [outputs[i]["A1"], data["wave"]["A1"][i]]],
+                        ["", "", "B1", freq_midpoints, [outputs[i]["B1"], data["wave"]["B1"][i]]],
+                        ["", "", "A2", freq_midpoints, [outputs[i]["A2"], data["wave"]["A2"][i]]],
+                        ["", "freq (Hz)", "B2", freq_midpoints, [outputs[i]["B2"], data["wave"]["B2"][i]]]
+                    ]
+                    fig, axs = plt.subplots(nrows=4, ncols=1)
+                    Plotter(fig, axs, figure)
+                else:
+                    figure = [
+                        ["Directional Spectra with banding", "", "A1",freq_midpoints, outputs[i]["A1"]],
+                        ["", "", "B1", freq_midpoints, outputs[i]["B1"]],
+                        ["", "", "A2", freq_midpoints, outputs[i]["A2"]],
+                        ["", "freq (Hz)", "B2", freq_midpoints, outputs[i]["B2"]]
+                    ]
+                    fig, axs = plt.subplots(nrows=4, ncols=1)
+                    Plotter(fig, axs, figure)
+
             elif(args.welch):
-                figure = [
-                    ["Directional Spectra with welch", "", "A1",
-                        [wPSD["freq_space"], freq_midpoints], [outputs[i]["welch"]["a1"], data["wave"]["a1"][i]]],
-                    ["", "", "B1", [wPSD["freq_space"], freq_midpoints], [
-                        outputs[i]["welch"]["b1"], data["wave"]["b1"][i]]],
-                    ["", "", "A2", [wPSD["freq_space"], freq_midpoints], [
-                        outputs[i]["welch"]["a2"], data["wave"]["a2"][i]]],
-                    ["", "freq (Hz)", "B2", [wPSD["freq_space"], freq_midpoints], [
-                        outputs[i]["welch"]["b2"], data["wave"]["b2"][i]]]
-                ]
-                fig, axs = plt.subplots(nrows=4, ncols=1)
-                Plotter(fig, axs, figure)
+                if args.compare:
+                    figure = [
+                        ["Directional Spectra with welch", "", "A1", [wPSD["freq_space"], freq_midpoints], [outputs[i]["A1"], data["wave"]["A1"][i]]],
+                        ["", "", "B1", [wPSD["freq_space"], freq_midpoints], [outputs[i]["B1"], data["wave"]["B1"][i]]],
+                        ["", "", "A2", [wPSD["freq_space"], freq_midpoints], [outputs[i]["A2"], data["wave"]["A2"][i]]],
+                        ["", "freq (Hz)", "B2", [wPSD["freq_space"], freq_midpoints], [outputs[i]["B2"], data["wave"]["B2"][i]]]
+                    ]
+                    fig, axs = plt.subplots(nrows=4, ncols=1)
+                    Plotter(fig, axs, figure)
+                else:
+                    figure = [
+                        ["Directional Spectra with welch", "", "A1", [wPSD["freq_space"]], [outputs[i]["A1"]]],
+                        ["", "", "B1", [wPSD["freq_space"]], [outputs[i]["B1"]]], 
+                        ["", "", "A2", [wPSD["freq_space"]], [outputs[i]["A2"]]],
+                        ["", "freq (Hz)", "B2", [wPSD["freq_space"]], [outputs[i]["B2"]]]
+                    ]
+                    fig, axs = plt.subplots(nrows=4, ncols=1)
+                    Plotter(fig, axs, figure)
 
         if(args.welch or args.banding or args.raw or args.ds or args.norm):
             plt.show()
@@ -356,9 +378,45 @@ def process(fn: str, args: ArgumentParser) -> None:
     else:
         output_dir = os.path.join(folder_name, output_name)
 
+
+    
+    xyz = {
+        "SampleRate":  data["frequency"],
+        "t": data["time"],
+        "x": data["dis"]["x"],
+        "y": data["dis"]["y"],
+        "z": data["dis"]["z"],
+    }
+    
+    meta = {
+        "WaterDepth":  data["depth"],
+        "Declination": data["declination"],
+        "DeployLatitude": data["latitude"],
+        "DeployLongitude": data["longitude"],    
+    }
+
+    # array of calculations merged into one dictionary
+    calcs = dictMerge(outputs)
+    calcs["TimeBounds"] = data["Timebounds"]
+    calcs["Bandwidth"] = data["freq"]["bandwidth"]
+    calcs["FreqBounds"] = data["FreqBounds"]
+
+    # convert wave to xrDataset
+    calcsD = xr.Dataset(calcs)
+    # convert meta to xrDataset
+    metaD = xr.Dataset(meta)
+    # convert xyz to xrDataset
+    xyzD = xr.Dataset(xyz)
+
     nc4.Dataset(output_dir, 'w', format='NETCDF4')
-    for i in datasets:
-        i.to_netcdf(output_dir, mode="a", group="wave")
+    
+    # writing to file
+    calcsD.to_netcdf(output_dir, mode="w", group="Wave")
+    xyzD.to_netcdf(output_dir, mode="a", group="XYZ")
+    metaD.to_netcdf(output_dir, mode="a", group="Meta")
+
+    
+    
 
 
 # parser.add_argument(
@@ -393,8 +451,10 @@ def main(raw_args=None):
                         help="Raw acceleration data")
 
     parser.add_argument("-o", "--output", type=str,
-                        help="netCDF file write out too")  # typed after commands
-
+                        help="netCDF file write out too") 
+    
+    parser.add_argument("--compare", action="store_true",
+                        help="compares our calculations with the calculations stored in source file if there is any")
     # required
     parser.add_argument("nc", nargs="+", type=str,
                         help="netCDF file to process")  # typed after commands
